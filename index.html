@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauss-Seidel Iteration Solver</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 25px;
+        }
+
+        .matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        input {
+            padding: 10px;
+            width: 60px;
+            text-align: center;
+            border: 1px solid #aaa;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 12px 25px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 8px;
+            background: #24292f;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        .section {
+            margin-top: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .iteration {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .final {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 15px;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Gauss-Seidel Iteration Solver</h1>
+
+    <p>
+        Solve a 3 × 3 system of linear equations using the
+        <b>Gauss-Seidel iterative method</b>.
+    </p>
+
+    <h2>Matrix A</h2>
+
+    <div class="matrix">
+        <input id="a11" placeholder="a11">
+        <input id="a12" placeholder="a12">
+        <input id="a13" placeholder="a13">
+
+        <input id="a21" placeholder="a21">
+        <input id="a22" placeholder="a22">
+        <input id="a23" placeholder="a23">
+
+        <input id="a31" placeholder="a31">
+        <input id="a32" placeholder="a32">
+        <input id="a33" placeholder="a33">
+    </div>
+
+    <h2>Vector B</h2>
+
+    <div class="matrix">
+        <input id="b1" placeholder="b1">
+        <input id="b2" placeholder="b2">
+        <input id="b3" placeholder="b3">
+    </div>
+
+    <h2>Initial Guess (Optional)</h2>
+
+    <div>
+        <input id="x0" placeholder="x⁰">
+        <input id="y0" placeholder="y⁰">
+        <input id="z0" placeholder="z⁰">
+    </div>
+
+    <h2>Number of Iterations</h2>
+
+    <input id="iterations" type="number" min="1" max="10" value="10">
+
+    <br>
+
+    <button onclick="solve()">SOLVE</button>
+
+    <div id="output"></div>
+
+</div>
+
+
+<script>
+
+function getValue(id) {
+    return parseFloat(document.getElementById(id).value);
+}
+
+function formatNumber(value) {
+    return value.toFixed(6);
+}
+
+function solve() {
+
+    const A = [
+        [getValue("a11"), getValue("a12"), getValue("a13")],
+        [getValue("a21"), getValue("a22"), getValue("a23")],
+        [getValue("a31"), getValue("a32"), getValue("a33")]
+    ];
+
+    const B = [
+        getValue("b1"),
+        getValue("b2"),
+        getValue("b3")
+    ];
+
+    let x = document.getElementById("x0").value === ""
+        ? 0 : getValue("x0");
+
+    let y = document.getElementById("y0").value === ""
+        ? 0 : getValue("y0");
+
+    let z = document.getElementById("z0").value === ""
+        ? 0 : getValue("z0");
+
+    let n = parseInt(document.getElementById("iterations").value);
+
+    const output = document.getElementById("output");
+
+    // Check input values
+    if (
+        A.flat().some(isNaN) ||
+        B.some(isNaN)
+    ) {
+        output.innerHTML =
+            "<p class='error'>Please enter all Matrix A and Vector B values.</p>";
+        return;
+    }
+
+    if (n < 1 || n > 10) {
+        output.innerHTML =
+            "<p class='error'>Iterations must be between 1 and 10.</p>";
+        return;
+    }
+
+    // Check diagonal values
+    if (A[0][0] === 0 || A[1][1] === 0 || A[2][2] === 0) {
+        output.innerHTML =
+            "<p class='error'>Diagonal coefficients cannot be zero.</p>";
+        return;
+    }
+
+    let html = "";
+
+    // Original equations
+    html += `
+        <div class="section">
+        <h2>System of Linear Equations</h2>
+
+        <p>${A[0][0]}x + ${A[0][1]}y + ${A[0][2]}z = ${B[0]}</p>
+
+        <p>${A[1][0]}x + ${A[1][1]}y + ${A[1][2]}z = ${B[1]}</p>
+
+        <p>${A[2][0]}x + ${A[2][1]}y + ${A[2][2]}z = ${B[2]}</p>
+        </div>
+    `;
+
+    // Rearranged equations
+    html += `
+        <div class="section">
+        <h2>Rearranged Equations</h2>
+
+        <p>
+        x = (${B[0]} - ${A[0][1]}y - ${A[0][2]}z) / ${A[0][0]}
+        </p>
+
+        <p>
+        y = (${B[1]} - ${A[1][0]}x - ${A[1][2]}z) / ${A[1][1]}
+        </p>
+
+        <p>
+        z = (${B[2]} - ${A[2][0]}x - ${A[2][1]}y) / ${A[2][2]}
+        </p>
+
+        </div>
+    `;
+
+    // Initial values
+    html += `
+        <div class="section">
+        <h2>Iterations</h2>
+
+        <div class="iteration">
+        <b>Iteration 0:</b>
+        (x⁰, y⁰, z⁰) =
+        (${formatNumber(x)}, ${formatNumber(y)}, ${formatNumber(z)})
+        </div>
+    `;
+
+    // Gauss-Seidel iterations
+    for (let i = 1; i <= n; i++) {
+
+        // New x
+        x = (B[0] - A[0][1] * y - A[0][2] * z)
+            / A[0][0];
+
+        // New y uses NEW x
+        y = (B[1] - A[1][0] * x - A[1][2] * z)
+            / A[1][1];
+
+        // New z uses NEW x and NEW y
+        z = (B[2] - A[2][0] * x - A[2][1] * y)
+            / A[2][2];
+
+        html += `
+            <div class="iteration">
+            <b>Iteration ${i}:</b>
+            (x⁽${i}⁾, y⁽${i}⁾, z⁽${i}⁾) =
+            (${formatNumber(x)},
+             ${formatNumber(y)},
+             ${formatNumber(z)})
+            </div>
+        `;
+    }
+
+    html += `
+        </div>
+
+        <div class="section final">
+        Final Solution
+        <br><br>
+        x = ${formatNumber(x)}<br>
+        y = ${formatNumber(y)}<br>
+        z = ${formatNumber(z)}
+
+        <br><br>
+
+        Converges approximately to:
+        (${formatNumber(x)}, ${formatNumber(y)}, ${formatNumber(z)})
+        </div>
+    `;
+
+    output.innerHTML = html;
+}
+
+</script>
+
+</body>
+</html>
